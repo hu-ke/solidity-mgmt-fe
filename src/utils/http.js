@@ -16,3 +16,8 @@ export const test = async() => {
     let { data } = await axios.get(`${baseUrl}/api`)
     return data
 }
+
+export const askGpt = async(params) => {
+    let { data } = await axios.post(`${baseUrl}/api/ask-gpt`, params)
+    return data
+}

@@ -1,0 +1,10 @@
+#root {
+    display: flex;
+    justify-content: center;
+}
+
+.main {
+    margin-top: 20px;
+    width: 80%;
+    max-width: 1040px;
+}
