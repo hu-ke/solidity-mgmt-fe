@@ -1,130 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import './App.css'
-import { test, uploadSolidityFile, askGpt } from '@/utils/http'
+import { uploadSolidityFile, askGpt } from '@/utils/http'
 import { ethers } from 'ethers'
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { solarizedlight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Flex, Layout } from 'antd';
 const { Content } = Layout;
-
-// const contract = `
-// //SPDX-License-Identifier: Unlicense
-// pragma solidity ^0.8.19;
-
-// import "@openzeppelin/contracts/utils/Counters.sol";
-// import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-// import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
-
-// contract MyNFT is ERC721URIStorage {
-//     using Counters for Counters.Counter;
-//     Counters.Counter private _tokenIds;
-
-//     struct NFT {
-//         uint256 price;
-//         bool forSale;
-//     }
-
-//     mapping(uint256 => NFT) public nfts;
-//     mapping(string => uint256) private _tokenIdsByURI;
-//     mapping(address => uint256[]) private _ownedTokens;
-//     mapping(uint256 => uint256) private _ownedTokensIndex;
-
-//     constructor() ERC721("MyNFT", "MNFT") {}
-
-//     function setForSale(uint256 tokenId, uint256 price) internal {
-//         require(ownerOf(tokenId) == msg.sender, "You are not the owner");
-//         nfts[tokenId] = NFT(price, true);
-//     }
-
-//     function mint(string memory tokenURI, uint256 price) public returns (uint256) {
-//         _tokenIds.increment();
-
-//         uint256 newItemId = _tokenIds.current();
-//         // _mint 方法通常用于创建新的代币并将其分配给指定的账户。这个方法在各种代币标准（如 ERC-20 和 ERC-721）中都有广泛的应用。
-//         _mint(msg.sender, newItemId);
-//         _setTokenURI(newItemId, tokenURI);
-//         _tokenIdsByURI[tokenURI] = newItemId;
-//         _addTokenToOwnerEnumeration(msg.sender, newItemId);
-//         setForSale(newItemId, price);
-
-//         return newItemId;
-//     }
-
-//     function buyNFT(uint256 tokenId) external payable {
-//         NFT storage nft = nfts[tokenId];
-//         require(nft.forSale, "NFT is not for sale");
-//         require(msg.value == nft.price, "Incorrect value sent");
-
-//         address seller = ownerOf(tokenId);
-
-//         // Transfer the NFT to the buyer
-//         _transfer(seller, msg.sender, tokenId);
-
-//         // Transfer the ETH to the seller
-//         payable(seller).transfer(msg.value);
-
-//         // Update the NFT status
-//         nft.forSale = false;
-//     }
-
-//     function getTokenIdByTokenURI(string memory tokenURI) public view returns (uint256) {
-//         require(_tokenIdsByURI[tokenURI] != 0, "Token URI does not exist");
-//         return _tokenIdsByURI[tokenURI];
-//     }
-
-//     function _addTokenToOwnerEnumeration(address to, uint256 tokenId) private {
-//         _ownedTokensIndex[tokenId] = _ownedTokens[to].length;
-//         _ownedTokens[to].push(tokenId);
-//     }
-
-//     function _removeTokenFromOwnerEnumeration(address from, uint256 tokenId) private {
-//         uint256 lastTokenIndex = _ownedTokens[from].length - 1;
-//         uint256 tokenIndex = _ownedTokensIndex[tokenId];
-
-//         if (tokenIndex != lastTokenIndex) {
-//             uint256 lastTokenId = _ownedTokens[from][lastTokenIndex];
-//             _ownedTokens[from][tokenIndex] = lastTokenId;
-//             _ownedTokensIndex[lastTokenId] = tokenIndex;
-//         }
-
-//         _ownedTokens[from].pop();
-//         delete _ownedTokensIndex[tokenId];
-//     }
-
-//     function _beforeTokenTransfer(address from, address to, uint256 tokenId, uint256 batchSize) internal virtual override {
-//         super._beforeTokenTransfer(from, to, tokenId, batchSize);
-
-//         if (from != address(0)) {
-//             _removeTokenFromOwnerEnumeration(from, tokenId);
-//         }
-//         if (to != address(0)) {
-//             _addTokenToOwnerEnumeration(to, tokenId);
-//         }
-//     }
-
-//     function getTokensOfOwner(address owner) public view returns (uint256[] memory) {
-//         return _ownedTokens[owner];
-//     }
-
-//     function totalSupply() public view returns (uint256) {
-//         return _tokenIds.current();
-//     }
-// }
-// `
-
-const contract = `
-// SPDX-License-Identifier: GPL-3.0
-pragma solidity >=0.4.16 <0.9.0;
-
-contract SimpleStorage {
-    uint storedData;
-
-    function set(uint x) public {
-        storedData = x;
-    }
-}
-`
 
 const headerStyle = {
   backgroundColor: "#e0e0e0",
@@ -144,21 +26,14 @@ const contentStyle = {
 const layoutStyle = {
   borderRadius: 8,
   overflow: 'hidden',
-  // width: 'calc(50% - 8px)',
-  // maxWidth: 'calc(50% - 8px)',
 };
 
 function App() {
   const fileInputRef = useRef(null);
-  const [fileContent, setFileContent] = useState();
+  const [fileContent, setFileContent] = useState()
   const [compileResult, setCompileResult] = useState()
-
-  const fn = async() => {
-    await test()
-  }
-  useEffect(() => {
-    fn()
-  }, [])
+  const [gptResponse, setGptResponse] = useState()
+  const [contractAddress, setContractAddress] = useState('')
 
   const handleUpload = async() => {
     // @ts-ignore
@@ -174,6 +49,12 @@ function App() {
       reader.readAsText(file)
     }
   }
+
+  useEffect(() => {
+    if (fileContent) {
+      // fetchGptReply(fileContent)
+    }
+  }, [fileContent])
 
   const handleFileChange = async(e) => {
     let formData = new FormData();
@@ -209,12 +90,16 @@ function App() {
         const abi = compileResult.abi;
         const bytecode = compileResult.bytecode; // 合约的字节码
 
+        console.log('abi>>', abi)
+        console.log('bytecode>>', bytecode)
+        console.log('signer', signer)
+
         // 创建合约工厂实例
         const factory = new ethers.ContractFactory(abi, bytecode, signer);
 
         // 部署合约
         factory.deploy().then((contract) => {
-          // 0x24e000f3Edf1270cb7f145E08816be595F39f118
+          setContractAddress(contract.address)
           console.log(`Contract deployed at address: ${contract.address}`);
         }).catch((error) => {
           console.error(`Deployment failed: ${error}`);
@@ -275,11 +160,15 @@ function App() {
     }
   }
 
-  const fetchGptReply = async() => {
+  const fetchGptReply = async(contract) => {
     const res = await askGpt({
-      contract
+      contract: `
+${contract}
+`
     })
-    console.log('res', res)
+    if (res.code === 200) {
+      setGptResponse(res.data)
+    }
   }
 
   return (
@@ -305,40 +194,68 @@ function App() {
           />
           <button style={{cursor: 'pointer', marginTop: '15px'}} onClick={handleUpload}>upload your smart contract</button>
           {
-            fileContent ? (
-              <div style={{padding: '0 40px'}}>
-              <ReactMarkdown
-                children={`
-\`\`\`solidity
-${fileContent}
-\`\`\`        
-                `}
-                components={{
-                  code({ node, inline, className, children, ...props }) {
-                    const match = /language-(\w+)/.exec(className || '');
-                    return !inline && match ? (
-                      <SyntaxHighlighter
-                        style={solarizedlight}
-                        language={match[1]}
-                        PreTag="div"
-                        {...props}
-                      >
-                        {String(children).replace(/\n$/, '')}
-                      </SyntaxHighlighter>
-                    ) : (
-                      <code className={className} {...props}>
-                        {children}
-                      </code>
-                    );
-                  }
-                }}
-              />
+            compileResult ? (
+              <button onClick={deploy} style={{marginLeft: 50}}>deploy</button>
+            ) : ''
+          }
+          {
+            contractAddress ? (
+              <div style={{color: '#000', marginTop: 20}}>
+                Contract Address: {contractAddress}
               </div>
             ) : ''
           }
-          {/* <button onClick={deploy}>deploy</button>
-          <button onClick={getStoredData}>get stored data</button>
-          <button onClick={fetchGptReply}>fetch gpt reply</button> */}
+          {
+            fileContent ? (
+              <div style={{padding: '0 40px'}}>
+                <ReactMarkdown
+                  children={`
+\`\`\`solidity
+${fileContent}
+\`\`\`        
+                  `}
+                  components={{
+                    code({ node, inline, className, children, ...props }) {
+                      const match = /language-(\w+)/.exec(className || '');
+                      return !inline && match ? (
+                        <SyntaxHighlighter
+                          style={solarizedlight}
+                          language={match[1]}
+                          PreTag="div"
+                          {...props}
+                        >
+                          {String(children).replace(/\n$/, '')}
+                        </SyntaxHighlighter>
+                      ) : (
+                        <code className={className} {...props}>
+                          {children}
+                        </code>
+                      );
+                    }
+                  }}
+                />
+              </div>
+            ) : ''
+          }
+          {
+            gptResponse ? (
+              <div style={{color: '#000', padding: '0 40px 20px', textAlign: 'left'}}>
+                <h3>Explanation: </h3>
+                <div style={{backgroundColor: 'rgb(238, 238, 238)', padding: '14px'}}>
+                  <code>{gptResponse.explanation}</code>
+                </div>
+                <h3>Improvements:</h3>
+                <div style={{backgroundColor: 'rgb(238, 238, 238)', padding: '14px'}}>
+                  <code>{gptResponse.improvements}</code>
+                </div>
+                <h3>Vulnerabilities:</h3>
+                <div style={{backgroundColor: 'rgb(238, 238, 238)', padding: '14px' }}>
+                  <code>{gptResponse.vulnerabilities}</code>
+                </div>
+              </div>
+            ) : ''
+          }
+          {/* <button onClick={getStoredData}>get stored data</button> */}
         </Content>
       </Layout>
     </Flex>
