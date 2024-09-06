@@ -12,7 +12,7 @@
   "dependencies": {
     "antd": "^5.20.5",
     "axios": "^1.7.3",
-    "ethers": "^5.7",
+    "ethers": "^5.7.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-markdown": "^9.0.1",

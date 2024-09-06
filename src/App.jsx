@@ -52,7 +52,7 @@ function App() {
 
   useEffect(() => {
     if (fileContent) {
-      // fetchGptReply(fileContent)
+      fetchGptReply(fileContent)
     }
   }, [fileContent])
 
@@ -89,10 +89,6 @@ function App() {
         // 合约的 ABI 和字节码
         const abi = compileResult.abi;
         const bytecode = compileResult.bytecode; // 合约的字节码
-
-        console.log('abi>>', abi)
-        console.log('bytecode>>', bytecode)
-        console.log('signer', signer)
 
         // 创建合约工厂实例
         const factory = new ethers.ContractFactory(abi, bytecode, signer);
@@ -255,7 +251,6 @@ ${fileContent}
               </div>
             ) : ''
           }
-          {/* <button onClick={getStoredData}>get stored data</button> */}
         </Content>
       </Layout>
     </Flex>
